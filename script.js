@@ -1,20 +1,11 @@
-// ==UserScript==
-// @name         xzan9's Deadshot.io Aimbot Helper
-// @namespace    http://tampermonkey.net/
-// @version      2024-05-18
-// @description  Adds Aimbot feature to Deadshot.io with a professional UI. Made by xzan9. Press B to enable Aimbot.
-// @author       You
-// @match        *://deadshot.io/*
-// @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
-// @grant        none
-// ==/UserScript==
- 
 (function() {
     'use strict';
  
     let aimbotEnabled = false;
     let uiVisible = true;
- 
+    let enemies = [];
+    const crosshair = document.querySelector('.game-crosshair'); // Assume we know this is static
+
     // Create the UI
     function createUI() {
         const container = document.createElement('div');
@@ -42,7 +33,7 @@
         toggleInfo.style.marginTop = '10px';
  
         const credits = document.createElement('div');
-        credits.textContent = 'Made by xzan9';
+        
         credits.style.marginTop = '10px';
         credits.style.fontSize = 'smaller';
         credits.style.color = '#ccc';
@@ -56,44 +47,43 @@
     // Toggle UI visibility
     function toggleUI() {
         const container = document.getElementById('helperUI');
-        if (uiVisible) {
-            container.style.display = 'none';
-        } else {
-            container.style.display = 'block';
-        }
+        container.style.display = uiVisible ? 'none' : 'block';
         uiVisible = !uiVisible;
     }
  
     // Function for Aimbot
     function aimbot() {
-        if (!aimbotEnabled) return;
- 
-        const enemies = document.querySelectorAll('.enemy-character'); // Updated with actual enemy selector
-        const crosshair = document.querySelector('.game-crosshair'); // Updated with actual crosshair selector
- 
-        if (enemies.length === 0) return;
- 
+        if (!aimbotEnabled || enemies.length === 0) return;
+
         let nearestEnemy = null;
-        let nearestDistance = Infinity;
+        let nearestDistanceSq = Infinity; // Use squared distance to avoid expensive square root calculation
  
         enemies.forEach(enemy => {
             const rect = enemy.getBoundingClientRect();
             const crosshairRect = crosshair.getBoundingClientRect();
-            const distance = Math.hypot(rect.left - crosshairRect.left, rect.top - crosshairRect.top);
+            const dx = rect.left - crosshairRect.left;
+            const dy = rect.top - crosshairRect.top;
+            const distanceSq = dx * dx + dy * dy; // Squared distance calculation
  
-            if (distance < nearestDistance) {
-                nearestDistance = distance;
+            if (distanceSq < nearestDistanceSq) {
+                nearestDistanceSq = distanceSq;
                 nearestEnemy = enemy;
             }
         });
  
         if (nearestEnemy) {
             // Move crosshair towards the nearest enemy
-            crosshair.style.left = ${nearestEnemy.getBoundingClientRect().left + nearestEnemy.clientWidth / 2}px;
-            crosshair.style.top = ${nearestEnemy.getBoundingClientRect().top + nearestEnemy.clientHeight / 2}px;
+            const enemyRect = nearestEnemy.getBoundingClientRect();
+            crosshair.style.left = `${enemyRect.left + nearestEnemy.clientWidth / 2}px`;
+            crosshair.style.top = `${enemyRect.top + nearestEnemy.clientHeight / 2}px`;
         }
     }
- 
+
+    // Function to update enemy list periodically
+    function updateEnemies() {
+        enemies = document.querySelectorAll('.enemy-character'); // Assume enemies are updated dynamically in the game
+    }
+
     // Initialize the UI and run the functions periodically
     createUI();
     document.addEventListener('keydown', (e) => {
@@ -106,7 +96,9 @@
             aimbotButton.textContent = aimbotEnabled ? 'Aimbot: ON (Press B to disable)' : 'Aimbot: OFF (Press B to enable)';
         }
     });
- 
-    setInterval(aimbot, 100);
+
+    setInterval(aimbot, 200); // Run aimbot every 200ms instead of 100ms
+    setInterval(updateEnemies, 500); // Update enemies list every 500ms
  
 })();
+
