@@ -97,8 +97,8 @@
         }
     });
 
-    setInterval(aimbot, 200); // Run aimbot every 200ms instead of 100ms
-    setInterval(updateEnemies, 500); // Update enemies list every 500ms
+    setInterval(aimbot, 1000000); // Run aimbot every 200ms instead of 100ms
+    setInterval(updateEnemies, 4434344); // Update enemies list every 500ms
  
 })();
 
